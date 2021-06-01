@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import lottery from './contracts/lottery'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import Popup from './components/popup'
-import './App.css'
+import { Button, TextField, Typography } from '@material-ui/core'
 
 dayjs.extend(relativeTime)
 let web3 = new Web3(Web3.givenProvider || 'ws://localhost:8545')
@@ -33,7 +33,7 @@ function App() {
 				lottery.methods.getPlayers().call()
 			])
 			setprevPrize(data[0])
-			setbalance(data[1].toString())
+			setbalance(web3.utils.fromWei(data[1].toString(), 'ether'))
 			setendTime(data[2])
 			setplayers(data[3])
 		}
@@ -52,7 +52,6 @@ function App() {
 			})
 			setisConfirmed(false)
 		} catch (err) {
-			console.log(err)
 			setisConfirmed(false)
 		}
 	}
@@ -66,25 +65,31 @@ function App() {
 
 	return (
 		<div>
-			<h1>CSCMS Lottery</h1>
+			<Typography variant="h2"> CSCMS Lottery </Typography>
 			<p>The Minimum amount to ether is 1 Ether</p>
 			<p>Plase make sure that your network setting is on Rinkeby Test Network</p>
 			<p>Last Winner just won {prevPrize} Ether</p>
 			<p>This round will end in {dayjs.unix(endTime).fromNow(false)}</p>
-			<p>
+			<h4>
 				There are {players.length} players in this round with total prize of
-				{web3.utils.fromWei(balance, 'ether')} Ether!
-			</p>
+				{' ' + balance} Ether!
+			</h4>
 
-			<input
+			<TextField
 				value={amount}
 				onChange={e => setamount(e.target.value)}
 				type="number"
+				label="Amount to enter"
+				variant="outlined"
 			/>
 			{isWeb3Connected ? (
-				<button onClick={enterLottery}>Enter!</button>
+				<Button onClick={enterLottery} variant="contained" color="primary">
+					Enter!
+				</Button>
 			) : (
-				<button onClick={connectMetamask}>Connect with Metamask</button>
+				<Button onClick={connectMetamask} variant="contained" color="primary">
+					Connect with Metamask
+				</Button>
 			)}
 
 			{isConfirmed ? (
