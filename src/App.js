@@ -66,7 +66,7 @@ function App() {
 	return (
 		<div>
 			<Typography variant="h2"> CSCMS Lottery </Typography>
-			<p>The Minimum amount to ether is 1 Ether</p>
+			<p>The Minimum amount to enter is 0.1 Ether</p>
 			<p>Plase make sure that your network setting is on Rinkeby Test Network</p>
 			<p>Last Winner just won {prevPrize} Ether</p>
 			<p>This round will end in {dayjs.unix(endTime).fromNow(false)}</p>
