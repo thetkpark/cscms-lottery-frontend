@@ -1,14 +1,13 @@
 import { Fragment, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import Web3 from 'web3'
-import web3 from './web3'
 import lottery from './contracts/lottery'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import Popup from './components/popup'
 import './App.css'
 
 dayjs.extend(relativeTime)
-
+let web3 = new Web3(Web3.givenProvider || 'ws://localhost:8545')
 function App() {
 	const [prevPrize, setprevPrize] = useState(0)
 	const [balance, setbalance] = useState('')
@@ -16,9 +15,17 @@ function App() {
 	const [players, setplayers] = useState([])
 	const [amount, setamount] = useState(0)
 	const [isConfirmed, setisConfirmed] = useState(undefined)
+	const [isWeb3Connected, setIsWeb3Connected] = useState(false)
 
 	useEffect(() => {
 		const getInitData = async () => {
+			try {
+				await window.ethereum.request({ method: 'eth_requestAccounts' })
+				setIsWeb3Connected(true)
+			} catch (error) {
+				setIsWeb3Connected(false)
+			}
+			web3 = new Web3(window.ethereum)
 			const data = await Promise.all([
 				lottery.methods.prevPrize().call(),
 				web3.eth.getBalance(lottery.options.address),
@@ -31,10 +38,12 @@ function App() {
 			setplayers(data[3])
 		}
 		getInitData()
-	}, [])
+		console.log(window.ethereum)
+	}, [isConfirmed])
 
 	const enterLottery = async () => {
 		try {
+			await window.ethereum.request({ method: 'eth_requestAccounts' })
 			const accounts = await web3.eth.getAccounts()
 			setisConfirmed(true)
 			await lottery.methods.enter().send({
@@ -43,12 +52,16 @@ function App() {
 			})
 			setisConfirmed(false)
 		} catch (err) {
-			// Do something
+			console.log(err)
+			setisConfirmed(false)
 		}
 	}
 
-	const connectMetamask = () => {
-		window.ethereum.request({ method: 'eth_requestAccounts' })
+	const connectMetamask = async () => {
+		try {
+			await window.ethereum.request({ method: 'eth_requestAccounts' })
+			setIsWeb3Connected(true)
+		} catch (error) {}
 	}
 
 	return (
@@ -62,13 +75,18 @@ function App() {
 				There are {players.length} players in this round with total prize of
 				{web3.utils.fromWei(balance, 'ether')} Ether!
 			</p>
-			<button onClick={connectMetamask}>Connect with Metamask</button>
+
 			<input
 				value={amount}
 				onChange={e => setamount(e.target.value)}
 				type="number"
 			/>
-			<button onClick={enterLottery}>Enter!</button>
+			{isWeb3Connected ? (
+				<button onClick={enterLottery}>Enter!</button>
+			) : (
+				<button onClick={connectMetamask}>Connect with Metamask</button>
+			)}
+
 			{isConfirmed ? (
 				<Popup content="waiting for confirmation" />
 			) : (
